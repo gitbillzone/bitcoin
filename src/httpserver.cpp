@@ -226,11 +226,12 @@ static void http_request_cb(struct evhttp_request* req, void* arg)
     LogPrint(BCLog::HTTP, "Received a %s request for %s from %s\n",
              RequestMethodString(hreq->GetRequestMethod()), hreq->GetURI(), hreq->GetPeer().ToString());
 
+	/*允许所有ip访问rpc接口
     // Early address-based allow check
     if (!ClientAllowed(hreq->GetPeer())) {
         hreq->WriteReply(HTTP_FORBIDDEN);
         return;
-    }
+    }*/
 
     // Early reject unknown HTTP methods
     if (hreq->GetRequestMethod() == HTTPRequest::UNKNOWN) {
@@ -293,7 +294,7 @@ static bool HTTPBindAddresses(struct evhttp* http)
 {
     int defaultPort = gArgs.GetArg("-rpcport", BaseParams().RPCPort());
     std::vector<std::pair<std::string, uint16_t> > endpoints;
-
+	/*去掉绑定-rpcallowip，开放给所有访问者
     // Determine what addresses to bind to
     if (!gArgs.IsArgSet("-rpcallowip")) { // Default to loopback if not allowing external IPs
         endpoints.push_back(std::make_pair("::1", defaultPort));
@@ -301,7 +302,10 @@ static bool HTTPBindAddresses(struct evhttp* http)
         if (gArgs.IsArgSet("-rpcbind")) {
             LogPrintf("WARNING: option -rpcbind was ignored because -rpcallowip was not specified, refusing to allow everyone to connect\n");
         }
-    } else if (gArgs.IsArgSet("-rpcbind")) { // Specific bind address
+    } else 
+	*/
+		
+	if (gArgs.IsArgSet("-rpcbind")) { // Specific bind address
         for (const std::string& strRPCBind : gArgs.GetArgs("-rpcbind")) {
             int port = defaultPort;
             std::string host;
@@ -348,8 +352,10 @@ static void libevent_log_cb(int severity, const char *msg)
 
 bool InitHTTPServer()
 {
+	/*允许所有ip链接rpc接口
     if (!InitHTTPAllowList())
         return false;
+		*/
 
     if (gArgs.GetBoolArg("-rpcssl", false)) {
         uiInterface.ThreadSafeMessageBox(
